@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Memória - Encontre os 3 Iguais</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Encontre os 3 Bonecos Iguais</h1>
+        <div class="board" id="game-board">
+            <!-- As cartas serão geradas aqui via JavaScript -->
+        </div>
+        <div class="score">
+            <p>Pares encontrados: <span id="pairs-count">0</span>/16</p>
+            <p>Tempo restante: <span id="timer">60</span> segundos</p>
+        </div>
+        <button id="restart" onclick="restartGame()">Reiniciar Jogo</button>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
