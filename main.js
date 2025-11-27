@@ -1,108 +1,95 @@
-// script.js
-
-const totalCards = 48; // Total de cartas (16 trios)
-const totalPairs = 16;  // Total de trios a encontrar
+const totalCards = 36; // Total de cartas (12 trios)
+const totalPairs = 12;  // Total de trios
 let flippedCards = [];
 let pairsFound = 0;
-let remainingTime = 60;  // Tempo em segundos
+let remainingTime = 60;  
 let timer;
+let busy = false; // Para impedir clique rápido
 const gameBoard = document.getElementById('game-board');
 const pairsCount = document.getElementById('pairs-count');
 const timerDisplay = document.getElementById('timer');
+const startBtn = document.getElementById('start-btn');
+const restartBtn = document.getElementById('restart');
 
-// Lista com os emojis dos bonecos (humores)
-const emotions = [
-    '😄', '😄', '😄', '😞', '😞', '😞', '😡', '😡', '😡', 
-    '😲', '😲', '😲', '😌', '😌', '😌', '😃', '😃', '😃', 
-    '😒', '😒', '😒', '😨', '😨', '😨', '🤔', '🤔', '🤔', 
-    '😏', '😏', '😏', '😎', '😎', '😎', '😬', '😬', '😬', 
-    '😐', '😐', '😐', '😂', '😂', '😂', '😅', '😅', '😅', 
-];
+// Emojis base
+const baseEmojis = ['😄','😞','😡','😲','😌','😃','😒','😨','🤔','😏','😎','😬'];
+
+// Cria array de trios
+const emotions = baseEmojis.flatMap(e => [e,e,e]);
 
 // Embaralha as cartas
-function shuffleCards() {
-    return emotions.sort(() => Math.random() - 0.5);
+function shuffleCards(array) {
+    return array.sort(() => Math.random() - 0.5);
 }
 
-// Cria as cartas no jogo
+// Cria o tabuleiro
 function createBoard() {
-    gameBoard.innerHTML = '';  // Limpa o tabuleiro
-
-    const shuffledCards = shuffleCards(); // Embaralha as cartas
+    gameBoard.innerHTML = '';
+    const shuffledCards = shuffleCards([...emotions]);
 
     shuffledCards.forEach(card => {
         const cardElement = document.createElement('div');
         cardElement.classList.add('card');
         cardElement.dataset.card = card;
-        cardElement.dataset.flipped = 'false'; // Adiciona uma propriedade para verificar se está virada
+        cardElement.dataset.flipped = 'false';
 
-        // Criamos um span para mostrar o emoji, mas ele fica escondido
         const emoji = document.createElement('span');
         emoji.textContent = card;
         emoji.classList.add('emoji');
         cardElement.appendChild(emoji);
 
-        // Adiciona evento de clique
         cardElement.addEventListener('click', flipCard);
         gameBoard.appendChild(cardElement);
     });
 }
 
-// Vira a carta quando clicada
+// Vira a carta
 function flipCard() {
+    if (busy) return;
     const clickedCard = this;
 
-    // Não permite virar mais de 3 cartas
-    if (flippedCards.length === 3) return;
-
-    // Verifica se a carta já foi virada
     if (clickedCard.dataset.flipped === 'true') return;
 
-    // Marca a carta como virada
     clickedCard.dataset.flipped = 'true';
-    clickedCard.classList.add('flipped');  // Aplica a classe para animar a virada
-
-    // Adiciona a carta na lista de cartas viradas
+    clickedCard.classList.add('flipped');
     flippedCards.push(clickedCard);
 
-    // Se viraram 3 cartas, verifica se são iguais
     if (flippedCards.length === 3) {
-        setTimeout(checkMatch, 1000); // Verifica a correspondência depois de 1 segundo
+        busy = true;
+        setTimeout(checkMatch, 1000);
     }
 }
 
-// Verifica se as cartas viradas são iguais
+// Verifica trios
 function checkMatch() {
     const [firstCard, secondCard, thirdCard] = flippedCards;
 
-    // Se as 3 cartas forem iguais
-    if (firstCard.dataset.card === secondCard.dataset.card && secondCard.dataset.card === thirdCard.dataset.card) {
-        pairsFound++; // Conta um par encontrado
-        pairsCount.textContent = `${pairsFound}/${totalPairs}`;
+    if (firstCard.dataset.card === secondCard.dataset.card &&
+        secondCard.dataset.card === thirdCard.dataset.card) {
 
-        // Se encontrou todos os trios
-        if (pairsFound === totalPairs) {
-            clearInterval(timer); // Para o cronômetro
-            alert(`Você encontrou todos os trios! Seu tempo: ${60 - remainingTime} segundos!`);
-        }
+        pairsFound++;
+        pairsCount.textContent = `${pairsFound}/${totalPairs} trios encontrados`;
 
-        // Remove os trios encontrados da tela (esconde as cartas)
         firstCard.style.visibility = 'hidden';
         secondCard.style.visibility = 'hidden';
         thirdCard.style.visibility = 'hidden';
+
+        if (pairsFound === totalPairs) {
+            clearInterval(timer);
+            alert(`Parabéns! Você encontrou todos os trios em ${60 - remainingTime} segundos!`);
+        }
     } else {
-        // Se não forem iguais, vira de volta
         firstCard.classList.remove('flipped');
         secondCard.classList.remove('flipped');
         thirdCard.classList.remove('flipped');
 
-        // Marca as cartas como não viradas
         firstCard.dataset.flipped = 'false';
         secondCard.dataset.flipped = 'false';
         thirdCard.dataset.flipped = 'false';
     }
 
-    flippedCards = [];  // Limpa a lista de cartas viradas
+    flippedCards = [];
+    busy = false;
 }
 
 // Cronômetro
@@ -110,8 +97,6 @@ function startTimer() {
     timer = setInterval(() => {
         remainingTime--;
         timerDisplay.textContent = remainingTime;
-
-        // Se o tempo acabar, o jogo termina
         if (remainingTime <= 0) {
             clearInterval(timer);
             alert('Tempo esgotado! Você não encontrou todos os trios.');
@@ -119,16 +104,26 @@ function startTimer() {
     }, 1000);
 }
 
-// Reinicia o jogo
-function restartGame() {
+// Inicia o jogo
+function startGame() {
     pairsFound = 0;
     remainingTime = 60;
-    pairsCount.textContent = `${pairsFound}/${totalPairs}`;
+    pairsCount.textContent = `${pairsFound}/${totalPairs} trios encontrados`;
     timerDisplay.textContent = remainingTime;
 
-    createBoard();  // Cria as cartas embaralhadas
-    startTimer();   // Inicia o cronômetro
+    createBoard();
+    startTimer();
+
+    startBtn.style.display = 'none';
+    restartBtn.style.display = 'inline-block';
 }
 
-// Inicia o jogo
-restartGame();
+// Reinicia o jogo
+function restartGame() {
+    clearInterval(timer);
+    startGame();
+}
+
+// Eventos
+startBtn.addEventListener('click', startGame);
+restartBtn.addEventListener('click', restartGame);
